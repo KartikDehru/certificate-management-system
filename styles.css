@@ -18,6 +18,32 @@ body {
     padding: 20px;
 }
 
+/* Navigation */
+.main-nav {
+    background: white;
+    padding: 20px 30px;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.main-nav h1 {
+    color: #ff6b35;
+    font-size: 2rem;
+    margin: 0;
+}
+
+.nav-buttons {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
 /* Section Management */
 .section {
     display: block;
@@ -303,6 +329,16 @@ body {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+    .main-nav {
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+    }
+    
+    .nav-buttons {
+        justify-content: center;
+    }
+    
     .admin-content {
         grid-template-columns: 1fr;
     }

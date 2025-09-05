@@ -39,6 +39,10 @@ function initializeApp() {
     document.querySelector('.close').addEventListener('click', closeModal);
     document.getElementById('downloadBtn').addEventListener('click', downloadCertificate);
     
+    // Navigation event listeners
+    document.getElementById('verificationNavBtn').addEventListener('click', () => showSection('verification'));
+    document.getElementById('adminNavBtn').addEventListener('click', () => showSection('login'));
+    
     // Close modal when clicking outside
     certificateModal.addEventListener('click', function(e) {
         if (e.target === certificateModal) {
