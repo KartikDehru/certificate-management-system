@@ -6,7 +6,10 @@ const ADMIN_CREDENTIALS = {
     password: 'qwerty123'
 };
 
-// Certificate storage (in a real app, this would be a database)
+// API base URL
+const API_BASE = window.location.origin + '/api';
+
+// Certificate storage (now using MongoDB via API)
 let certificates = [];
 let currentUser = null;
 
@@ -98,37 +101,58 @@ function handleLogout() {
 }
 
 // Certificate Generation
-function handleCertificateGeneration(e) {
+async function handleCertificateGeneration(e) {
     e.preventDefault();
     
     const studentName = document.getElementById('studentName').value;
     const courseName = document.getElementById('courseName').value;
     const completionDate = document.getElementById('completionDate').value;
     
-    // Generate unique certificate ID
-    const certificateId = generateCertificateId();
-    
-    // Create certificate object
-    const certificate = {
-        id: certificateId,
-        studentName,
-        courseName,
-        completionDate,
-        issuedDate: new Date().toISOString().split('T')[0],
-        issuedBy: currentUser.username
-    };
-    
-    // Store certificate
-    certificates.push(certificate);
-    
-    // Generate and display certificate
-    generateCertificate(certificate);
-    
-    // Reset form
-    certificateForm.reset();
-    
-    // Update certificate list
-    loadCertificateList();
+    try {
+        // Show loading state
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Generating...';
+        submitBtn.disabled = true;
+        
+        // Create certificate via API
+        const response = await fetch(`${API_BASE}/certificates`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                studentName,
+                courseName,
+                completionDate,
+                issuedBy: currentUser.username
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to create certificate');
+        }
+        
+        const certificate = await response.json();
+        
+        // Generate and display certificate
+        generateCertificate(certificate);
+        
+        // Reset form
+        certificateForm.reset();
+        
+        // Update certificate list
+        await loadCertificateList();
+        
+    } catch (error) {
+        console.error('Error creating certificate:', error);
+        alert('Failed to create certificate. Please try again.');
+    } finally {
+        // Reset button state
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        submitBtn.textContent = 'Generate Certificate';
+        submitBtn.disabled = false;
+    }
 }
 
 function generateCertificateId() {
@@ -230,33 +254,47 @@ function formatDate(dateString) {
 }
 
 // Certificate List Management
-function loadCertificateList() {
-    certificateList.innerHTML = '';
-    
-    if (certificates.length === 0) {
-        certificateList.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No certificates issued yet.</p>';
-        return;
+async function loadCertificateList() {
+    try {
+        certificateList.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">Loading certificates...</p>';
+        
+        const response = await fetch(`${API_BASE}/certificates`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch certificates');
+        }
+        
+        certificates = await response.json();
+        
+        certificateList.innerHTML = '';
+        
+        if (certificates.length === 0) {
+            certificateList.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No certificates issued yet.</p>';
+            return;
+        }
+        
+        certificates.forEach(certificate => {
+            const certificateItem = document.createElement('div');
+            certificateItem.className = 'certificate-item';
+            
+            certificateItem.innerHTML = `
+                <div class="certificate-info">
+                    <h4>${certificate.studentName}</h4>
+                    <p><strong>Course:</strong> ${certificate.courseName}</p>
+                    <p><strong>Completed:</strong> ${formatDate(certificate.completionDate)}</p>
+                    <p><strong>ID:</strong> ${certificate.id}</p>
+                </div>
+                <div class="certificate-actions">
+                    <button class="btn btn-primary btn-small" onclick="viewCertificate('${certificate.id}')">View</button>
+                    <button class="btn btn-secondary btn-small" onclick="copyCertificateId('${certificate.id}')">Copy ID</button>
+                </div>
+            `;
+            
+            certificateList.appendChild(certificateItem);
+        });
+    } catch (error) {
+        console.error('Error loading certificates:', error);
+        certificateList.innerHTML = '<p style="text-align: center; color: #dc3545; padding: 20px;">Failed to load certificates. Please refresh the page.</p>';
     }
-    
-    certificates.forEach(certificate => {
-        const certificateItem = document.createElement('div');
-        certificateItem.className = 'certificate-item';
-        
-        certificateItem.innerHTML = `
-            <div class="certificate-info">
-                <h4>${certificate.studentName}</h4>
-                <p><strong>Course:</strong> ${certificate.courseName}</p>
-                <p><strong>Completed:</strong> ${formatDate(certificate.completionDate)}</p>
-                <p><strong>ID:</strong> ${certificate.id}</p>
-            </div>
-            <div class="certificate-actions">
-                <button class="btn btn-primary btn-small" onclick="viewCertificate('${certificate.id}')">View</button>
-                <button class="btn btn-secondary btn-small" onclick="copyCertificateId('${certificate.id}')">Copy ID</button>
-            </div>
-        `;
-        
-        certificateList.appendChild(certificateItem);
-    });
 }
 
 function viewCertificate(certificateId) {
@@ -282,7 +320,7 @@ function copyCertificateId(certificateId) {
 }
 
 // Certificate Verification
-function handleVerification(e) {
+async function handleVerification(e) {
     e.preventDefault();
     
     const certificateId = document.getElementById('certificateId').value.trim();
@@ -293,21 +331,40 @@ function handleVerification(e) {
         return;
     }
     
-    const certificate = certificates.find(cert => cert.id === certificateId);
-    
-    if (certificate) {
-        const resultHTML = `
-            <h3>✅ Certificate Verified</h3>
-            <p><strong>Student Name:</strong> ${certificate.studentName}</p>
-            <p><strong>Course:</strong> ${certificate.courseName}</p>
-            <p><strong>Completion Date:</strong> ${formatDate(certificate.completionDate)}</p>
-            <p><strong>Issued Date:</strong> ${formatDate(certificate.issuedDate)}</p>
-            <p><strong>Issued By:</strong> ${certificate.issuedBy}</p>
-            <p><strong>Certificate ID:</strong> ${certificate.id}</p>
-        `;
-        showVerificationResult(resultHTML, 'success');
-    } else {
-        showVerificationResult('❌ Certificate not found. Please check the certificate ID and try again.', 'error');
+    try {
+        // Show loading state
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Verifying...';
+        submitBtn.disabled = true;
+        
+        const response = await fetch(`${API_BASE}/certificates/${certificateId}`);
+        
+        if (response.ok) {
+            const certificate = await response.json();
+            const resultHTML = `
+                <h3>✅ Certificate Verified</h3>
+                <p><strong>Student Name:</strong> ${certificate.studentName}</p>
+                <p><strong>Course:</strong> ${certificate.courseName}</p>
+                <p><strong>Completion Date:</strong> ${formatDate(certificate.completionDate)}</p>
+                <p><strong>Issued Date:</strong> ${formatDate(certificate.issuedDate)}</p>
+                <p><strong>Issued By:</strong> ${certificate.issuedBy}</p>
+                <p><strong>Certificate ID:</strong> ${certificate.id}</p>
+            `;
+            showVerificationResult(resultHTML, 'success');
+        } else if (response.status === 404) {
+            showVerificationResult('❌ Certificate not found. Please check the certificate ID and try again.', 'error');
+        } else {
+            throw new Error('Verification failed');
+        }
+    } catch (error) {
+        console.error('Error verifying certificate:', error);
+        showVerificationResult('❌ Failed to verify certificate. Please try again.', 'error');
+    } finally {
+        // Reset button state
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        submitBtn.textContent = 'Verify Certificate';
+        submitBtn.disabled = false;
     }
 }
 
