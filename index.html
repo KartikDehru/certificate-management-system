@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificate Management System</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Login Section -->
+        <div id="loginSection" class="section">
+            <div class="login-card">
+                <h1>Certificate Management System</h1>
+                <h2>Admin Login</h2>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="username">Username:</label>
+                        <input type="text" id="username" name="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password:</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Login</button>
+                </form>
+                <div id="loginError" class="error-message"></div>
+            </div>
+        </div>
+
+        <!-- Admin Dashboard -->
+        <div id="adminSection" class="section hidden">
+            <header class="admin-header">
+                <h1>Admin Dashboard</h1>
+                <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+            </header>
+
+            <div class="admin-content">
+                <!-- Certificate Issuance Form -->
+                <div class="card">
+                    <h2>Issue New Certificate</h2>
+                    <form id="certificateForm">
+                        <div class="form-group">
+                            <label for="studentName">Student Name:</label>
+                            <input type="text" id="studentName" name="studentName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="courseName">Course Name:</label>
+                            <input type="text" id="courseName" name="courseName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="completionDate">Completion Date:</label>
+                            <input type="date" id="completionDate" name="completionDate" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Generate Certificate</button>
+                    </form>
+                </div>
+
+                <!-- Certificate List -->
+                <div class="card">
+                    <h2>Issued Certificates</h2>
+                    <div id="certificateList" class="certificate-list">
+                        <!-- Certificates will be displayed here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Public Verification Section -->
+        <div id="verificationSection" class="section">
+            <div class="verification-card">
+                <h1>Certificate Verification</h1>
+                <p>Enter the certificate ID to verify authenticity</p>
+                <form id="verificationForm">
+                    <div class="form-group">
+                        <label for="certificateId">Certificate ID:</label>
+                        <input type="text" id="certificateId" name="certificateId" placeholder="Enter certificate ID" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Verify Certificate</button>
+                </form>
+                <div id="verificationResult" class="verification-result"></div>
+            </div>
+        </div>
+
+        <!-- Certificate Preview Modal -->
+        <div id="certificateModal" class="modal hidden">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Certificate Preview</h2>
+                <canvas id="certificateCanvas" width="800" height="600"></canvas>
+                <div class="modal-actions">
+                    <button id="downloadBtn" class="btn btn-primary">Download Certificate</button>
+                    <button id="closeModalBtn" class="btn btn-secondary">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
